@@ -12,7 +12,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -68,7 +67,6 @@ const LoginPage = () => {
                     <FormControl>
                       <Input placeholder="example@gmail.com" {...field} />
                     </FormControl>
-                    <FormDescription />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -86,7 +84,6 @@ const LoginPage = () => {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription />
                     <FormMessage />
                   </FormItem>
                 )}
