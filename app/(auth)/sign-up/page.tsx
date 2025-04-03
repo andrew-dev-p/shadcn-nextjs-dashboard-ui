@@ -10,15 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Popover,
   PopoverContent,
@@ -35,20 +38,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, PersonStandingIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const formSchema = z
+const accountTypeSchema = z
   .object({
-    email: z.string().email(),
     accountType: z.enum(["personal", "company"]),
     companyName: z.string().optional(),
     numberOfEmployees: z.coerce.number().optional(),
-    dateOfBirth: z.date().refine((date) => {
-      const today = new Date();
-      const age = today.getFullYear() - date.getFullYear();
-      return age >= 18;
-    }, "You must be at least 18 years old"),
   })
   .superRefine((data, ctx) => {
     if (data.accountType === "company" && !data.companyName) {
@@ -71,9 +69,49 @@ const formSchema = z
     }
   });
 
+const passwordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(6)
+      .refine((password) => {
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasLowercase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+        return hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+      }, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
+    passwordConfirm: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.passwordConfirm) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["passwordConfirm"],
+        message: "Passwords do not match",
+      });
+    }
+  });
+
+const baseSchema = z.object({
+  email: z.string().email(),
+  dateOfBirth: z.date().refine((date) => {
+    const today = new Date();
+    const age = today.getFullYear() - date.getFullYear();
+    return age >= 18;
+  }, "You must be at least 18 years old"),
+  acceptTerms: z
+    .boolean()
+    .refine((value) => value, "You must accept the terms"),
+});
+
+const formSchema = baseSchema.and(accountTypeSchema).and(passwordSchema);
+
 type FormSchema = z.infer<typeof formSchema>;
 
 const SignupPage = () => {
+  const router = useRouter();
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -81,11 +119,14 @@ const SignupPage = () => {
       accountType: "personal",
       companyName: "",
       numberOfEmployees: 0,
+      password: "",
+      passwordConfirm: "",
     },
   });
 
   const onSubmit = (data: FormSchema) => {
     console.log(data);
+    router.push("/dashboard");
   };
 
   const accountTypesWatch = form.watch("accountType");
@@ -212,6 +253,61 @@ const SignupPage = () => {
                         />
                       </PopoverContent>
                     </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder="********" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="passwordConfirm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder="********" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-start gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Accept terms</FormLabel>
+                    </div>
+                    <FormDescription>
+                      By signing up, you agree to our{" "}
+                      <Link href="/terms" className="underline">
+                        terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link href="/privacy" className="underline">
+                        privacy policy
+                      </Link>
+                      .
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
