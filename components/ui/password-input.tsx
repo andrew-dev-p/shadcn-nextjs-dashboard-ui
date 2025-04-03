@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { forwardRef, InputHTMLAttributes, Ref } from "react";
+import { forwardRef, InputHTMLAttributes } from "react";
 import { Input } from "./input";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
