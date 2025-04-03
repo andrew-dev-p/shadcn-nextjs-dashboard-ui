@@ -30,7 +30,7 @@ cd shadcn-nextjs-dashboard-ui
 npm install
 ```
 
-##Running the App
+## Running the App
 
 Start the development server:
 
